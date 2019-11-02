@@ -1,4 +1,18 @@
-#include "udaf_median.h"
+// Copyright 2012 Cloudera Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "uda-sample.h"
 #include <assert.h>
 #include <sstream>
 
@@ -22,40 +36,61 @@ StringVal ToStringVal<DoubleVal>(FunctionContext* context, const DoubleVal& val)
 }
 
 // ---------------------------------------------------------------------------
+// This is a sample of implementing a COUNT aggregate function.
+// ---------------------------------------------------------------------------
+void CountInit(FunctionContext* context, BigIntVal* val) {
+  val->is_null = false;
+  val->val = 0;
+}
+
+void CountUpdate(FunctionContext* context, const IntVal& input, BigIntVal* val) {
+  if (input.is_null) return;
+  ++val->val;
+}
+
+void CountMerge(FunctionContext* context, const BigIntVal& src, BigIntVal* dst) {
+  dst->val += src.val;
+}
+
+BigIntVal CountFinalize(FunctionContext* context, const BigIntVal& val) {
+  return val;
+}
+
+// ---------------------------------------------------------------------------
 // This is a sample of implementing a AVG aggregate function.
 // ---------------------------------------------------------------------------
-struct MedStruct {
+struct AvgStruct {
   double sum;
   int64_t count;
 };
 
-// Initialize the StringVal intermediate to a zero'd MedStruct
-void MedInit(FunctionContext* context, StringVal* val) {
-  val->ptr = context->Allocate(sizeof(MedStruct));
+// Initialize the StringVal intermediate to a zero'd AvgStruct
+void AvgInit(FunctionContext* context, StringVal* val) {
+  val->ptr = context->Allocate(sizeof(AvgStruct));
   // Exit on failed allocation. Impala will fail the query after some time.
   if (val->ptr == NULL) {
     *val = StringVal::null();
     return;
   }
   val->is_null = false;
-  val->len = sizeof(MedStruct);
+  val->len = sizeof(AvgStruct);
   memset(val->ptr, 0, val->len);
 }
 
-void MedUpdate(FunctionContext* context, const DoubleVal& input, StringVal* val) {
+void AvgUpdate(FunctionContext* context, const DoubleVal& input, StringVal* val) {
   if (input.is_null) return;
   // Handle failed allocation. Impala will fail the query after some time.
   if (val->is_null) return;
-  assert(val->len == sizeof(MedStruct));
-  MedStruct* avg = reinterpret_cast<MedStruct*>(val->ptr);
+  assert(val->len == sizeof(AvgStruct));
+  AvgStruct* avg = reinterpret_cast<AvgStruct*>(val->ptr);
   avg->sum += input.val;
   ++avg->count;
 }
 
-void MedMerge(FunctionContext* context, const StringVal& src, StringVal* dst) {
+void AvgMerge(FunctionContext* context, const StringVal& src, StringVal* dst) {
   if (src.is_null || dst->is_null) return;
-  const MedStruct* src_avg = reinterpret_cast<const MedStruct*>(src.ptr);
-  MedStruct* dst_avg = reinterpret_cast<MedStruct*>(dst->ptr);
+  const AvgStruct* src_avg = reinterpret_cast<const AvgStruct*>(src.ptr);
+  AvgStruct* dst_avg = reinterpret_cast<AvgStruct*>(dst->ptr);
   dst_avg->sum += src_avg->sum;
   dst_avg->count += src_avg->count;
 }
@@ -64,8 +99,8 @@ void MedMerge(FunctionContext* context, const StringVal& src, StringVal* dst) {
 // StringVal constructor to allocate memory owned by Impala, copy the intermediate state,
 // and free the original allocation. Note that memory allocated by the StringVal ctor is
 // not necessarily persisted across UDA function calls, which is why we don't use it in
-// MedInit().
-StringVal MedSerialize(FunctionContext* context, const StringVal& val) {
+// AvgInit().
+StringVal AvgSerialize(FunctionContext* context, const StringVal& val) {
   if (val.is_null) return StringVal::null();
   // Copy the value into Impala-managed memory with StringVal::CopyFrom().
   // NB: CopyFrom() will return a null StringVal and and fail the query if the allocation
@@ -75,10 +110,10 @@ StringVal MedSerialize(FunctionContext* context, const StringVal& val) {
   return result;
 }
 
-StringVal MedFinalize(FunctionContext* context, const StringVal& val) {
+StringVal AvgFinalize(FunctionContext* context, const StringVal& val) {
   if (val.is_null) return StringVal::null();
-  assert(val.len == sizeof(MedStruct));
-  MedStruct* avg = reinterpret_cast<MedStruct*>(val.ptr);
+  assert(val.len == sizeof(AvgStruct));
+  AvgStruct* avg = reinterpret_cast<AvgStruct*>(val.ptr);
   StringVal result;
   if (avg->count == 0) {
     result = StringVal::null();

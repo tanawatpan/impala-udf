@@ -40,15 +40,15 @@ function(COMPILE_TO_IR SRC_FILE)
 endfunction(COMPILE_TO_IR)
 
 # Build the UDA/UDFs into a shared library.
-add_library(udasample SHARED udaf_median.cc)
+add_library(udasample SHARED uda-sample.cc)
 
 # Custom targest to cross compile UDA/UDF to ir
 if (CLANG_EXECUTABLE)
-  COMPILE_TO_IR(udaf_median.cc )
+  COMPILE_TO_IR(uda-sample.cc )
 endif(CLANG_EXECUTABLE)
 
 # This is an example of how to use the test harness to help develop UDF and UDAs.
 target_link_libraries(udasample ImpalaUdf)
-add_executable(udaf_median_test udaf_median.cc)
-target_link_libraries(udaf_median_test udasample)
+add_executable(uda-sample-test uda-sample-test.cc)
+target_link_libraries(uda-sample-test udasample)
 
