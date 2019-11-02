@@ -1,0 +1,1 @@
+alias run-udf='rm -r build/;rm -r CMakeFiles;cmake .;make'

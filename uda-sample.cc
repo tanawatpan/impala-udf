@@ -36,27 +36,6 @@ StringVal ToStringVal<DoubleVal>(FunctionContext* context, const DoubleVal& val)
 }
 
 // ---------------------------------------------------------------------------
-// This is a sample of implementing a COUNT aggregate function.
-// ---------------------------------------------------------------------------
-void CountInit(FunctionContext* context, BigIntVal* val) {
-  val->is_null = false;
-  val->val = 0;
-}
-
-void CountUpdate(FunctionContext* context, const IntVal& input, BigIntVal* val) {
-  if (input.is_null) return;
-  ++val->val;
-}
-
-void CountMerge(FunctionContext* context, const BigIntVal& src, BigIntVal* dst) {
-  dst->val += src.val;
-}
-
-BigIntVal CountFinalize(FunctionContext* context, const BigIntVal& val) {
-  return val;
-}
-
-// ---------------------------------------------------------------------------
 // This is a sample of implementing a AVG aggregate function.
 // ---------------------------------------------------------------------------
 struct AvgStruct {

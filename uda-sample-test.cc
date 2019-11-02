@@ -22,42 +22,6 @@ using namespace impala;
 using namespace impala_udf;
 using namespace std;
 
-bool TestCount() {
-  // Use the UDA test harness to validate the COUNT UDA.
-  UdaTestHarness<BigIntVal, BigIntVal, IntVal> test(
-      CountInit, CountUpdate, CountMerge, NULL, CountFinalize);
-
-  // Run the UDA over empty input
-  vector<IntVal> empty;
-  if (!test.Execute(empty, BigIntVal(0))) {
-    cerr << "Count empty: " << test.GetErrorMsg() << endl;
-    return false;
-  }
-
-  // Run the UDA over 10000 non-null values
-  vector<IntVal> no_nulls;
-  no_nulls.resize(10000);
-  if (!test.Execute(no_nulls, BigIntVal(no_nulls.size()))) {
-    cerr << "Count without nulls: " << test.GetErrorMsg() << endl;
-    return false;
-  }
-
-  // Run the UDA with some nulls
-  vector<IntVal> some_nulls;
-  some_nulls.resize(10000);
-  int expected = some_nulls.size();
-  for (int i = 0; i < some_nulls.size(); i += 100) {
-    some_nulls[i] = IntVal::null();
-    --expected;
-  }
-  if (!test.Execute(some_nulls, BigIntVal(expected))) {
-    cerr << "Count with nulls: " << test.GetErrorMsg() << endl;
-    return false;
-  }
-
-  return true;
-}
-
 bool TestAvg() {
   typedef UdaTestHarness<StringVal, StringVal, DoubleVal> TestHarness;
   // Note: reinterpret_cast is required because pre-2.9 UDF headers had a spurious "const"
@@ -79,9 +43,7 @@ bool TestAvg() {
     vals.push_back(DoubleVal(i));
   }
 
-  cout << "TEST3";
-
-  if (!test.Execute<DoubleVal>(vals, StringVal("1500"))) {
+  if (!test.Execute<DoubleVal>(vals, StringVal("500"))) {
     cerr << "Avg: " << test.GetErrorMsg() << endl;
     return false;
   }
@@ -90,9 +52,7 @@ bool TestAvg() {
 
 int main(int argc, char** argv) {
   bool passed = true;
-  passed &= TestCount();
   passed &= TestAvg();
-  cout << "TEST4";
   cerr << (passed ? "Tests passed." : "Tests failed.") << endl;
   return 0;
 }
