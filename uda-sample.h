@@ -19,14 +19,14 @@
 
 using namespace impala_udf;
 
-// Usage: > create aggregate function my_avg(double) returns string 
-//          location '/user/cloudera/libudasample.so' update_fn='AvgUpdate';
-//        > select cast(my_avg(col) as double) from tbl;
-void AvgInit(FunctionContext* context, StringVal* val);
-void AvgUpdate(FunctionContext* context, const DoubleVal& input, StringVal* val);
-void AvgMerge(FunctionContext* context, const StringVal& src, StringVal* dst);
-StringVal AvgSerialize(FunctionContext* context, const StringVal& val);
-StringVal AvgFinalize(FunctionContext* context, const StringVal& val);
+// Usage: > create aggregate function my_med(double) returns string 
+//          location '/user/cloudera/libudasample.so' update_fn='MedUpdate';
+//        > select cast(my_med(col) as double) from tbl;
+void MedInit(FunctionContext* context, StringVal* val);
+void MedUpdate(FunctionContext* context, const DoubleVal& input, StringVal* val);
+void MedMerge(FunctionContext* context, const StringVal& src, StringVal* dst);
+StringVal MedSerialize(FunctionContext* context, const StringVal& val);
+StringVal MedFinalize(FunctionContext* context, const StringVal& val);
 
 // Utility function for serialization to StringVal
 template <typename T>

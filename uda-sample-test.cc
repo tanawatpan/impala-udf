@@ -22,29 +22,29 @@ using namespace impala;
 using namespace impala_udf;
 using namespace std;
 
-bool TestAvg() {
+bool TestMed() {
   typedef UdaTestHarness<StringVal, StringVal, DoubleVal> TestHarness;
   // Note: reinterpret_cast is required because pre-2.9 UDF headers had a spurious "const"
   // specifier in the return type for SerializeFn. It is unnecessary for 2.9+ headers.
-  TestHarness test(AvgInit, AvgUpdate, AvgMerge,
-      reinterpret_cast<TestHarness::SerializeFn>(AvgSerialize), AvgFinalize);
+  TestHarness test(MedInit, MedUpdate, MedMerge,
+      reinterpret_cast<TestHarness::SerializeFn>(MedSerialize), MedFinalize);
   test.SetIntermediateSize(16);
 
   vector<DoubleVal> vals;
 
   // Test empty input
-  if (!test.Execute<DoubleVal>(vals, StringVal::null())) {
-    cerr << "Avg empty: " << test.GetErrorMsg() << endl;
-    return false;
-  }
+  // if (!test.Execute<DoubleVal>(vals, StringVal::null())) {
+  //   cerr << "Med empty: " << test.GetErrorMsg() << endl;
+  //   return false;
+  // }
 
   // Test values
-  for (int i = 0; i < 1001; ++i) {
+  for (int i = 0; i < 155; ++i) {
     vals.push_back(DoubleVal(i));
   }
 
-  if (!test.Execute<DoubleVal>(vals, StringVal("500"))) {
-    cerr << "Avg: " << test.GetErrorMsg() << endl;
+  if (!test.Execute<DoubleVal>(vals, StringVal("77"))) {
+    cerr << "Med: " << test.GetErrorMsg() << endl;
     return false;
   }
   return true;
@@ -52,7 +52,7 @@ bool TestAvg() {
 
 int main(int argc, char** argv) {
   bool passed = true;
-  passed &= TestAvg();
+  passed &= TestMed();
   cerr << (passed ? "Tests passed." : "Tests failed.") << endl;
   return 0;
 }
