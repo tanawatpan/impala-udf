@@ -11,12 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #include "uda-sample.h"
-#include <assert.h>
 #include <algorithm>
-#include <list>
 #include <sstream>
 #include <iostream>
+#include <assert.h>
+#include <list>
 
 using namespace impala_udf;
 using namespace std;
@@ -40,7 +41,7 @@ StringVal ToStringVal<DoubleVal>(FunctionContext *context, const DoubleVal &val)
   return ToStringVal(context, val.val);
 }
 
-struct t_percent
+struct t_median
 {
   std::list<double> *values;
   int64_t count;
@@ -49,7 +50,7 @@ struct t_percent
 // Initialize the StringVal intermediate to a zero'd MedStruct
 void MedInit(FunctionContext *context, StringVal *val)
 {
-  val->ptr = context->Allocate(sizeof(t_percent));
+  val->ptr = context->Allocate(sizeof(t_median));
   // Exit on failed allocation. Impala will fail the query after some time.
   if (val->ptr == NULL)
   {
@@ -57,7 +58,7 @@ void MedInit(FunctionContext *context, StringVal *val)
     return;
   }
   val->is_null = false;
-  val->len = sizeof(t_percent);
+  val->len = sizeof(t_median);
   memset(val->ptr, 0, val->len);
 }
 
@@ -69,13 +70,15 @@ void MedUpdate(FunctionContext *context, const DoubleVal &input, StringVal *val)
   if (val->is_null)
     return;
 
-  assert(val->len == sizeof(t_percent));
+  assert(val->len == sizeof(t_median));
 
-  t_percent *median = reinterpret_cast<t_percent *>(val->ptr);
+  t_median *median = reinterpret_cast<t_median *>(val->ptr);
+
   if (median->values == NULL)
     median->values = new std::list<double>();
-  median->count += 1;
+
   median->values->push_back(input.val);
+  median->count += 1;
 }
 
 void MedMerge(FunctionContext *context, const StringVal &src, StringVal *dst)
@@ -83,14 +86,16 @@ void MedMerge(FunctionContext *context, const StringVal &src, StringVal *dst)
   if (src.is_null || dst->is_null)
     return;
 
-  const t_percent *src_median = reinterpret_cast<t_percent *>(src.ptr);
-  t_percent *dst_median = reinterpret_cast<t_percent *>(dst->ptr);
+  const t_median *src_median = reinterpret_cast<t_median *>(src.ptr);
+  t_median *dst_median = reinterpret_cast<t_median *>(dst->ptr);
 
   if (dst_median->values == NULL)
     dst_median->values = new std::list<double>();
 
+  if (src_median->values != NULL)
+    dst_median->values->merge(*src_median->values);
+
   dst_median->count += src_median->count;
-  dst_median->values->merge(*src_median->values);
 }
 
 // A serialize function is necesary to free the intermediate state allocation. We use the
@@ -115,34 +120,33 @@ StringVal MedFinalize(FunctionContext *context, const StringVal &val)
   if (val.is_null)
     return StringVal::null();
 
-  assert(val.len == sizeof(t_percent));
+  assert(val.len == sizeof(t_median));
 
-  t_percent *median = reinterpret_cast<t_percent *>(val.ptr);
+  t_median *median = reinterpret_cast<t_median *>(val.ptr);
 
   if (median->values == NULL || median->values->empty())
     return StringVal::null();
 
-  StringVal result;
-  double result_value;
   median->values->sort();
 
   std::list<double>::iterator it = median->values->begin();
+  std::advance(it, median->count / 2);
+
+  double result_value;
 
   if (median->count % 2 == 1)
   {
-    std::advance(it, median->count / 2);
     result_value = *it;
   }
   else
   {
-    std::advance(it, median->count / 2);
     double left = *it;
     std::advance(it, 1);
     double right = *it;
     result_value = (left + right) / 2;
   }
 
-  result = ToStringVal(context, result_value);
+  StringVal result = ToStringVal(context, result_value);
   delete (median->values);
   context->Free(val.ptr);
 

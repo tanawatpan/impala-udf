@@ -1,1 +1,1 @@
-alias run-udf='rm -r build/;rm -r CMakeFiles;cmake .;make'
+alias run-udf='rm -r build/;rm -r CMakeFiles;cmake .;make;build/uda-sample-test'

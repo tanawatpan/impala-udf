@@ -14,6 +14,8 @@
 
 #include <iostream>
 #include <math.h>
+#include <cstdio>
+#include <ctime>
 
 #include <impala_udf/uda-test-harness.h>
 #include "uda-sample.h"
@@ -22,37 +24,80 @@ using namespace impala;
 using namespace impala_udf;
 using namespace std;
 
-bool TestMed() {
+bool TestMed()
+{
   typedef UdaTestHarness<StringVal, StringVal, DoubleVal> TestHarness;
   // Note: reinterpret_cast is required because pre-2.9 UDF headers had a spurious "const"
   // specifier in the return type for SerializeFn. It is unnecessary for 2.9+ headers.
   TestHarness test(MedInit, MedUpdate, MedMerge,
-      reinterpret_cast<TestHarness::SerializeFn>(MedSerialize), MedFinalize);
+                   reinterpret_cast<TestHarness::SerializeFn>(MedSerialize), MedFinalize);
   test.SetIntermediateSize(16);
 
   vector<DoubleVal> vals;
+  vector<DoubleVal> vals2;
+  vector<DoubleVal> vals3;
 
   // Test empty input
-  // if (!test.Execute<DoubleVal>(vals, StringVal::null())) {
+  // vector<DoubleVal> val_null;
+  // if (!test.Execute<DoubleVal>(val_null, StringVal::null())) {
   //   cerr << "Med empty: " << test.GetErrorMsg() << endl;
   //   return false;
   // }
 
   // Test values
-  for (int i = 0; i < 155; ++i) {
+  for (int i = 0; i < 155; ++i)
+  {
     vals.push_back(DoubleVal(i));
   }
 
-  if (!test.Execute<DoubleVal>(vals, StringVal("77"))) {
+  if (!test.Execute<DoubleVal>(vals, StringVal("77")))
+  {
     cerr << "Med: " << test.GetErrorMsg() << endl;
     return false;
   }
+
+  // Test values2
+  for (int i = 0; i < 100001; ++i)
+  {
+    vals2.push_back(DoubleVal(i));
+  }
+
+  if (!test.Execute<DoubleVal>(vals2, StringVal("50000")))
+  {
+    cerr << "Med: " << test.GetErrorMsg() << endl;
+    return false;
+  }
+
+  // Test values3
+  for (int i = 0; i < 3; ++i)
+  {
+    vals3.push_back(DoubleVal(i));
+  }
+
+  if (!test.Execute<DoubleVal>(vals3, StringVal("1")))
+  {
+    cerr << "Med: " << test.GetErrorMsg() << endl;
+    return false;
+  }
+
   return true;
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
+  std::clock_t start;
+  double duration;
+
   bool passed = true;
+
+  start = std::clock();
+
   passed &= TestMed();
+  
   cerr << (passed ? "Tests passed." : "Tests failed.") << endl;
+
+  duration = (std::clock() - start) / (double)CLOCKS_PER_SEC;
+  std::cout << "printf: " << duration << '\n';
+
   return 0;
 }
