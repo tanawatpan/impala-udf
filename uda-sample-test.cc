@@ -38,16 +38,18 @@ bool TestMed()
   vector<DoubleVal> vals3;
 
   // Test empty input
-  // vector<DoubleVal> val_null;
-  // if (!test.Execute<DoubleVal>(val_null, StringVal::null())) {
-  //   cerr << "Med empty: " << test.GetErrorMsg() << endl;
-  //   return false;
-  // }
+  vector<DoubleVal> val_null;
+  if (!test.Execute<DoubleVal>(val_null, StringVal::null()))
+  {
+    cerr << "Med empty: " << test.GetErrorMsg() << endl;
+    return false;
+  }
 
-  // Test values
+  // Test some values is null
   for (int i = 0; i < 155; ++i)
   {
     vals.push_back(DoubleVal(i));
+    vals.push_back(DoubleVal::null());
   }
 
   if (!test.Execute<DoubleVal>(vals, StringVal("77")))
@@ -56,7 +58,7 @@ bool TestMed()
     return false;
   }
 
-  // Test values2
+  // Test large values
   for (int i = 0; i < 100001; ++i)
   {
     vals2.push_back(DoubleVal(i));
@@ -68,13 +70,13 @@ bool TestMed()
     return false;
   }
 
-  // Test values3
-  for (int i = 0; i < 3; ++i)
+  // Test small values
+  for (int i = 0; i < 4; ++i)
   {
     vals3.push_back(DoubleVal(i));
   }
 
-  if (!test.Execute<DoubleVal>(vals3, StringVal("1")))
+  if (!test.Execute<DoubleVal>(vals3, StringVal("1.5")))
   {
     cerr << "Med: " << test.GetErrorMsg() << endl;
     return false;
@@ -93,11 +95,11 @@ int main(int argc, char **argv)
   start = std::clock();
 
   passed &= TestMed();
-  
+
   cerr << (passed ? "Tests passed." : "Tests failed.") << endl;
 
   duration = (std::clock() - start) / (double)CLOCKS_PER_SEC;
-  std::cout << "printf: " << duration << '\n';
+  std::cout << "Times: " << duration << '\n';
 
   return 0;
 }

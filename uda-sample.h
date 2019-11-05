@@ -19,9 +19,6 @@
 
 using namespace impala_udf;
 
-// Usage: > create aggregate function my_med(double) returns string 
-//          location '/user/cloudera/libudasample.so' update_fn='MedUpdate';
-//        > select cast(my_med(col) as double) from tbl;
 void MedInit(FunctionContext* context, StringVal* val);
 void MedUpdate(FunctionContext* context, const DoubleVal& input, StringVal* val);
 void MedMerge(FunctionContext* context, const StringVal& src, StringVal* dst);

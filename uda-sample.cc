@@ -43,7 +43,7 @@ StringVal ToStringVal<DoubleVal>(FunctionContext *context, const DoubleVal &val)
 
 struct t_median
 {
-  std::list<double> *values;
+  list<double> *values;
   int64_t count;
 };
 
@@ -125,28 +125,33 @@ StringVal MedFinalize(FunctionContext *context, const StringVal &val)
   t_median *median = reinterpret_cast<t_median *>(val.ptr);
 
   if (median->values == NULL || median->values->empty())
+  {
+    // Free Memory
+    context->Free(val.ptr);
     return StringVal::null();
+  }
 
   median->values->sort();
 
-  std::list<double>::iterator it = median->values->begin();
-  std::advance(it, median->count / 2);
+  list<double>::iterator it = median->values->begin();
+  // Move iterator to middle position.
+  advance(it, median->count / 2);
 
-  double result_value;
+  StringVal result;
 
   if (median->count % 2 == 1)
   {
-    result_value = *it;
+    result = ToStringVal(context, *it);
   }
   else
   {
-    double left = *it;
-    std::advance(it, 1);
     double right = *it;
-    result_value = (left + right) / 2;
+    advance(it, -1);
+    double left = *it;
+    result = ToStringVal(context, (left + right) / 2);
   }
 
-  StringVal result = ToStringVal(context, result_value);
+  // Free Memory
   delete (median->values);
   context->Free(val.ptr);
 
