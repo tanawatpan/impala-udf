@@ -33,10 +33,6 @@ bool TestMed()
                    reinterpret_cast<TestHarness::SerializeFn>(MedSerialize), MedFinalize);
   test.SetIntermediateSize(16);
 
-  vector<DoubleVal> vals;
-  vector<DoubleVal> vals2;
-  vector<DoubleVal> vals3;
-
   // Test empty input
   vector<DoubleVal> val_null;
   if (!test.Execute<DoubleVal>(val_null, StringVal::null()))
@@ -46,37 +42,40 @@ bool TestMed()
   }
 
   // Test some values is null
+  vector<DoubleVal> some_nulls;
   for (int i = 0; i < 155; ++i)
   {
-    vals.push_back(DoubleVal(i));
-    vals.push_back(DoubleVal::null());
+    some_nulls.push_back(DoubleVal(i));
+    some_nulls.push_back(DoubleVal::null());
   }
 
-  if (!test.Execute<DoubleVal>(vals, StringVal("77")))
+  if (!test.Execute<DoubleVal>(some_nulls, StringVal("77")))
   {
     cerr << "Med: " << test.GetErrorMsg() << endl;
     return false;
   }
 
   // Test large values
+  vector<DoubleVal> large_vals;
   for (int i = 0; i < 100001; ++i)
   {
-    vals2.push_back(DoubleVal(i));
+    large_vals.push_back(DoubleVal(i));
   }
 
-  if (!test.Execute<DoubleVal>(vals2, StringVal("50000")))
+  if (!test.Execute<DoubleVal>(large_vals, StringVal("50000")))
   {
     cerr << "Med: " << test.GetErrorMsg() << endl;
     return false;
   }
 
   // Test small values
+  vector<DoubleVal> small_vals;
   for (int i = 0; i < 4; ++i)
   {
-    vals3.push_back(DoubleVal(i));
+    small_vals.push_back(DoubleVal(i));
   }
 
-  if (!test.Execute<DoubleVal>(vals3, StringVal("1.5")))
+  if (!test.Execute<DoubleVal>(small_vals, StringVal("1.5")))
   {
     cerr << "Med: " << test.GetErrorMsg() << endl;
     return false;
