@@ -1,5 +1,5 @@
-rm -r build/ \
-rm -r CMakeFiles \
+rm -r ./build/ \
+rm -r ./CMakeFiles \
 cmake . && \
 make && \
-build/uda-sample-test
+./build/uda-sample-test
